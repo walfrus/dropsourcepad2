@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, FileText, Hash, Music } from 'lucide-react';
+import { FileText, Hash, Music } from 'lucide-react';
 import { Project, SectionName } from '@/lib/types';
 import useAppStore from '@/lib/store';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
 import { countWords, countSyllables, countCharacters } from '@/lib/syllables';
 import { Debouncer } from '@/lib/persist';
 
@@ -16,8 +15,9 @@ interface LyricEditorProps {
 }
 
 export function LyricEditor({ project }: LyricEditorProps) {
-  const { updateSection, addSection: addSectionToStore } = useAppStore();
+  const { updateSection } = useAppStore();
   const [activeTab, setActiveTab] = useState<SectionName>('verse');
+  const [viewAll, setViewAll] = useState(false);
   const [sectionTexts, setSectionTexts] = useState<Record<string, string>>({});
   const debouncers = useState(() => new Map<string, Debouncer<string>>())[0];
 
@@ -48,9 +48,7 @@ export function LyricEditor({ project }: LyricEditorProps) {
     }, text);
   };
 
-  const addSection = (name: SectionName) => {
-    addSectionToStore(project.id, name);
-  };
+
 
   const getSectionStats = (text: string) => {
     const words = countWords(text);
@@ -82,34 +80,19 @@ export function LyricEditor({ project }: LyricEditorProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Lyrics</h2>
-        <div className="flex space-x-2">
-          <Button
-            onClick={() => addSection('verse')}
-            variant="outline"
-            size="sm"
-            className="text-xs"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Verse
-          </Button>
-          <Button
-            onClick={() => addSection('chorus')}
-            variant="outline"
-            size="sm"
-            className="text-xs"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Chorus
-          </Button>
-          <Button
-            onClick={() => addSection('bridge')}
-            variant="outline"
-            size="sm"
-            className="text-xs"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Bridge
-          </Button>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg overflow-hidden border border-[var(--border)]">
+            {['Verse','Chorus','Bridge'].map(t => (
+              <button key={t}
+                className={`px-3 py-2 text-sm ${activeTab===t ? 'bg-[var(--bg-input)]' : 'bg-transparent'} hover:bg-[var(--bg-input)]`}
+                onClick={() => setActiveTab(t as any)}
+              >{t}</button>
+            ))}
+          </div>
+          <button className="px-3 py-2 text-sm rounded-full bg-[var(--bg-input)] border border-[var(--border)]"
+            onClick={() => setViewAll(v => !v)}>
+            {viewAll ? 'View: Active' : 'View: All'}
+          </button>
         </div>
       </div>
 
@@ -129,7 +112,8 @@ export function LyricEditor({ project }: LyricEditorProps) {
         </TabsList>
 
         {/* Tab Content */}
-        {project.sections.map((section) => {
+        {(viewAll ? project.sections : project.sections.filter(s => s.name === activeTab))
+          .map((section) => {
           const text = sectionTexts[section.id] || '';
           const stats = getSectionStats(text);
           
@@ -146,7 +130,7 @@ export function LyricEditor({ project }: LyricEditorProps) {
                     value={text}
                     onChange={(e) => handleTextChange(section.id, e.target.value)}
                     placeholder={`Write your ${section.name} lyrics here...`}
-                    className="h-full resize-none text-base leading-relaxed"
+                    className="h-full resize-none text-base leading-relaxed min-h-[320px]"
                   />
                 </div>
 

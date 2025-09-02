@@ -296,3 +296,24 @@ export const getAudioDuration = (file: File | Blob): Promise<number> => {
     audio.src = url;
   });
 };
+
+export async function blobWithDuration(blob: Blob): Promise<{blob: Blob; durationMs: number}> {
+  // Use a timer fallback in case metadata lies
+  const url = URL.createObjectURL(blob);
+  const audio = document.createElement("audio");
+  audio.src = url;
+  const durationMs = await new Promise<number>((resolve) => {
+    const t = setTimeout(() => resolve(NaN), 1500); // fallback
+    audio.onloadedmetadata = () => { clearTimeout(t); resolve(audio.duration * 1000); };
+  });
+  URL.revokeObjectURL(url);
+  return { blob, durationMs: Number.isFinite(durationMs) ? durationMs : 0 };
+}
+
+export function fmtMs(ms?: number) {
+  if (!Number.isFinite(ms || 0)) return "—";
+  const total = Math.max(0, Math.round((ms as number) / 1000));
+  const m = Math.floor(total / 60);
+  const s = (total % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}

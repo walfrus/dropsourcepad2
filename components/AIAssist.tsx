@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Send, Copy, Check, RefreshCw, Lightbulb, Music, Heart } from 'lucide-react';
+import { Sparkles, Send, Copy, Check, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 
@@ -10,98 +10,45 @@ import { Textarea } from './ui/textarea';
 interface AIAssistProps {
   isOpen: boolean;
   onClose: () => void;
-  context?: string;
 }
 
-interface Suggestion {
-  id: string;
-  text: string;
-  type: 'lyric' | 'melody' | 'theme' | 'rhythm';
-  confidence: number;
-}
 
-interface MoodOption {
-  value: string;
-  label: string;
-  icon: React.ReactNode;
-  description: string;
-}
 
-const moodOptions: MoodOption[] = [
-  { value: 'romantic', label: 'Romantic', icon: <Heart className="w-4 h-4" />, description: 'Love, passion, intimacy' },
-  { value: 'energetic', label: 'Energetic', icon: <Music className="w-4 h-4" />, description: 'Upbeat, powerful, dynamic' },
-  { value: 'melancholic', label: 'Melancholic', icon: <Lightbulb className="w-4 h-4" />, description: 'Sad, reflective, deep' },
-  { value: 'uplifting', label: 'Uplifting', icon: <Sparkles className="w-4 h-4" />, description: 'Inspiring, hopeful, positive' },
-];
 
-export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
-  const [inputText, setInputText] = useState(context);
-  const [selectedMood, setSelectedMood] = useState('romantic');
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+export function AIAssist({ isOpen, onClose }: AIAssistProps) {
+  const [mood, setMood] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<{text:string; confidence?:number}[]>([]);
   const [copiedSuggestion, setCopiedSuggestion] = useState<string>('');
 
-  const generateSuggestions = async () => {
-    if (!inputText.trim()) return;
+  const moods = ["Romantic","Energetic","Melancholic","Uplifting"];
 
-    setIsLoading(true);
-    
+  function pct(c?: number) {
+    return Number.isFinite(c) ? `${Math.round((c as number) * 100)}% confidence` : "";
+  }
+
+  async function generate() {
+    if (!input.trim()) return;
+    setLoading(true);
     try {
-      const response = await fetch('/api/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: inputText,
-          mood: selectedMood,
-        }),
+      const r = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: input, mood }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.suggestions || []);
-      } else {
-        // Fallback to mock suggestions for demo
-        generateMockSuggestions();
-      }
-    } catch (error) {
-      console.error('Failed to get AI suggestions:', error);
-      generateMockSuggestions();
+      const data = await r.json();
+      setSuggestions((data.suggestions || []).map((s: any) => ({
+        text: String(s.text || s),
+        confidence: Number.isFinite(s.confidence) ? s.confidence : undefined,
+      })));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }
 
-  const generateMockSuggestions = () => {
-    const mockSuggestions: Suggestion[] = [
-      {
-        id: '1',
-        text: 'In the moonlight, your eyes shine so bright, like stars in the night',
-        type: 'lyric',
-        confidence: 0.95,
-      },
-      {
-        id: '2',
-        text: 'Try a 4/4 time signature with emphasis on beats 1 and 3',
-        type: 'rhythm',
-        confidence: 0.88,
-      },
-      {
-        id: '3',
-        text: 'Consider using a minor key progression: Am - F - C - G',
-        type: 'melody',
-        confidence: 0.82,
-      },
-      {
-        id: '4',
-        text: 'Explore themes of longing and distance, common in romantic ballads',
-        type: 'theme',
-        confidence: 0.78,
-      },
-    ];
-    setSuggestions(mockSuggestions);
-  };
+
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -113,35 +60,11 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'lyric': return <Music className="w-4 h-4" />;
-      case 'melody': return <Sparkles className="w-4 h-4" />;
-      case 'theme': return <Lightbulb className="w-4 h-4" />;
-      case 'rhythm': return <RefreshCw className="w-4 h-4" />;
-      default: return <Sparkles className="w-4 h-4" />;
-    }
-  };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'lyric': return 'text-blue-500 bg-blue-500/10';
-      case 'melody': return 'text-purple-500 bg-purple-500/10';
-      case 'theme': return 'text-green-500 bg-green-500/10';
-      case 'rhythm': return 'text-orange-500 bg-orange-500/10';
-      default: return 'text-muted bg-muted';
-    }
-  };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'lyric': return 'Lyric';
-      case 'melody': return 'Melody';
-      case 'theme': return 'Theme';
-      case 'rhythm': return 'Rhythm';
-      default: return 'Suggestion';
-    }
-  };
+
+
+
 
   return (
     <AnimatePresence>
@@ -181,8 +104,8 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
               <div>
                 <label className="block text-sm font-medium mb-2">Your lyrics or idea</label>
                 <Textarea
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
                   placeholder="Describe what you're working on, paste your lyrics, or share your musical vision..."
                   className="min-h-[100px] resize-none"
                 />
@@ -190,34 +113,23 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Mood & Style</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {moodOptions.map((mood) => (
-                    <button
-                      key={mood.value}
-                      onClick={() => setSelectedMood(mood.value)}
-                      className={`p-3 rounded-lg border transition-all text-left ${
-                        selectedMood === mood.value
-                          ? 'border-accent bg-accent/10'
-                          : 'border-line hover:border-accent/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        {mood.icon}
-                        <span className="font-medium text-sm">{mood.label}</span>
-                      </div>
-                      <p className="text-xs text-muted">{mood.description}</p>
-                    </button>
+                <div className="flex flex-wrap gap-2">
+                  {moods.map(m => (
+                    <button key={m}
+                      className={`px-3 py-2 rounded-full border ${m===mood ? 'bg-[var(--bg-input)]' : 'bg-transparent'}`}
+                      onClick={() => setMood(m)}
+                    >{m}</button>
                   ))}
                 </div>
               </div>
 
               <Button
-                onClick={generateSuggestions}
-                disabled={!inputText.trim() || isLoading}
+                onClick={generate}
+                disabled={!input.trim() || loading}
                 className="w-full"
                 size="lg"
               >
-                {isLoading ? (
+                {loading ? (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     Generating...
@@ -243,7 +155,7 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {suggestions.map((suggestion, index) => (
                     <motion.div
-                      key={suggestion.id}
+                      key={index}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.1 }}
@@ -251,9 +163,9 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          {getTypeIcon(suggestion.type)}
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(suggestion.type)}`}>
-                            {getTypeLabel(suggestion.type)}
+                          <Sparkles className="w-4 h-4" />
+                          <span className="px-2 py-1 rounded text-xs font-medium text-blue-500 bg-blue-500/10">
+                            AI Suggestion
                           </span>
                         </div>
                         <Button
@@ -272,19 +184,7 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
                       
                       <p className="text-sm mb-3">{suggestion.text}</p>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-muted rounded-full h-2">
-                            <div
-                              className="bg-accent h-2 rounded-full"
-                              style={{ width: `${suggestion.confidence * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted">
-                            {Math.round(suggestion.confidence * 100)}% confidence
-                          </span>
-                        </div>
-                      </div>
+                      {suggestion.confidence !== undefined && <span className="muted text-xs">{pct(suggestion.confidence)}</span>}
                     </motion.div>
                   ))}
                 </div>
@@ -294,7 +194,7 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
             {/* Tips */}
             <div className="mt-8 bg-accent/10 border border-accent/20 p-4 rounded-lg">
               <h4 className="font-semibold text-accent mb-2 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" />
+                <Sparkles className="w-4 h-4" />
                 How to Use AI Assistant
               </h4>
               <ul className="text-sm space-y-1">

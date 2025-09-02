@@ -35,6 +35,9 @@
     outline-offset: 2px;
   }
 
+  ::selection { background: #1e6ea6; color: #0f1419; }
+  textarea, input { caret-color: #1e6ea6; }
+
   .debug-border, .hard-border { border: none !important; }
 }
 
@@ -54,5 +57,6 @@
     transition: filter .15s ease;
   }
   .btn:hover { filter: brightness(1.05); }
+  .btn[aria-busy="true"] { filter: saturate(.7) brightness(.9); cursor: wait; }
   .muted { color: var(--text-muted); }
 }

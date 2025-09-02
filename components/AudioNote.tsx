@@ -1,130 +1,79 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Project, Clip } from '@/lib/types';
 import useAppStore from '@/lib/store';
-import { AudioRecorder, getAudioDuration } from '@/lib/audio';
+import { fmtMs, blobWithDuration } from '@/lib/audio';
+import { saveClipBlob, getClipBlob } from '@/lib/idb';
 
 interface AudioNoteProps {
   project: Project;
 }
 
 export function AudioNote({ project }: AudioNoteProps) {
-    const { addClip } = useAppStore();
+  const { addClip } = useAppStore();
   const [isRecording, setIsRecording] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  // These are kept for the existing audio logic but not displayed in the simplified UI
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [currentTime, setCurrentTime] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [duration, setDuration] = useState(0);
-  const [recordingTime, setRecordingTime] = useState(0);
-  
-  const audioRecorder = useRef<AudioRecorder | null>(null);
-  const audioElement = useRef<HTMLAudioElement | null>(null);
-  const recordingInterval = useRef<NodeJS.Timeout>();
-  const playingInterval = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    return () => {
-      if (recordingInterval.current) {
-        clearInterval(recordingInterval.current);
-      }
-      if (playingInterval.current) {
-        clearInterval(playingInterval.current);
-      }
-    };
-  }, []);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [chunks, setChunks] = useState<Blob[]>([]);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   const startRecording = async () => {
     try {
-      audioRecorder.current = new AudioRecorder(
-        () => {
-          // Handle data available
-        },
-        async (blob) => {
-          // Handle recording complete
-          const durationMs = await getAudioDuration(blob);
-          const file = new File([blob], `recording-${Date.now()}.webm`, { type: blob.type });
-          await addClip(project.id, file, durationMs);
-          setIsRecording(false);
-          setRecordingTime(0);
-          if (recordingInterval.current) {
-            clearInterval(recordingInterval.current);
-          }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+          ? 'audio/webm;codecs=opus' 
+          : 'audio/webm'
+      });
+      
+      setChunks([]);
+      setMediaRecorder(recorder);
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setChunks(prev => [...prev, event.data]);
         }
-      );
-
-      await audioRecorder.current.start();
+      };
+      
+      recorder.start(100);
       setIsRecording(true);
-      setRecordingTime(0);
-
-      // Start recording timer
-      recordingInterval.current = setInterval(() => {
-        setRecordingTime(prev => prev + 100);
-      }, 100);
     } catch (error) {
       console.error('Failed to start recording:', error);
       alert('Failed to start recording. Please check microphone permissions.');
     }
   };
 
-  const stopRecording = () => {
-    if (audioRecorder.current && isRecording) {
-      audioRecorder.current.stop();
+  const stopRecording = async () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      const raw = new Blob(chunks, { type: 'audio/webm' });
+      const { blob, durationMs } = await blobWithDuration(raw);
+      const id = crypto.randomUUID();
+      await saveClipBlob(id, blob);
+      addClip(project.id, new File([blob], `recording-${Date.now()}.webm`, { type: blob.type }), durationMs);
+      setChunks([]);
+      setIsRecording(false);
+      
+      // Stop the stream
+      if (mediaRecorder.stream) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
     }
   };
 
-
-
-  const playClip = (clip: Clip) => {
-    if (audioElement.current) {
-      audioElement.current.pause();
+  const playClip = async (clip: Clip) => {
+    try {
+      const blob = await getClipBlob(clip.id);
+      if (!blob) return;
+      
+      const audio = new Audio(URL.createObjectURL(blob));
+      audio.onended = () => setPlayingId(null);
+      await audio.play();
+      setPlayingId(clip.id);
+    } catch (error) {
+      console.error('Failed to play clip:', error);
     }
-
-    // Create new audio element
-    const audio = new Audio();
-    audio.src = URL.createObjectURL(new Blob([clip.blobKey])); // This would need to be the actual blob
-    audioElement.current = audio;
-
-    audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration * 1000);
-      audio.play();
-      setIsPlaying(true);
-      setCurrentTime(0);
-
-      // Start playing timer
-      playingInterval.current = setInterval(() => {
-        setCurrentTime(audio.currentTime * 1000);
-      }, 100);
-    });
-
-    audio.addEventListener('ended', () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
-      if (playingInterval.current) {
-        clearInterval(playingInterval.current);
-      }
-    });
-
-    audio.addEventListener('pause', () => {
-      setIsPlaying(false);
-      if (playingInterval.current) {
-        clearInterval(playingInterval.current);
-      }
-    });
   };
-
-
-
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-
 
   return (
     <div className="space-y-4">
@@ -137,12 +86,9 @@ export function AudioNote({ project }: AudioNoteProps) {
 
       {isRecording && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-red-500">Recording...</span>
-            </div>
-            <span className="text-sm muted">{Math.floor(recordingTime/1000)}s</span>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-red-500">Recording...</span>
           </div>
         </div>
       )}
@@ -155,8 +101,10 @@ export function AudioNote({ project }: AudioNoteProps) {
             <li key={clip.id} className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-input)] p-2">
               <span className="text-sm">{clip.filename}</span>
               <div className="flex items-center gap-2">
-                <button className="btn px-2 py-1" onClick={() => playClip(clip)}>{isPlaying ? 'Pause' : 'Play'}</button>
-                <span className="muted text-xs">{formatTime(clip.durationMs)}</span>
+                <button className="btn px-2 py-1" onClick={() => playClip(clip)}>
+                  {playingId === clip.id ? 'Pause' : 'Play'}
+                </button>
+                <span className="muted text-xs">{fmtMs(clip.durationMs)}</span>
               </div>
             </li>
           ))}

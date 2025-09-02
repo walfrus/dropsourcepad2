@@ -1,20 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { findRhymes } from '@/lib/rhyme';
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const q = (searchParams.get("q") || "").trim().toLowerCase();
+  if (!q) return NextResponse.json({ perfect: [], near: [], assonance: [] });
+
+  const endpoint = (rel: string) =>
+    `https://api.datamuse.com/words?max=50&${rel}=${encodeURIComponent(q)}`;
+
   try {
-    const body = await request.json();
-    const { word } = body;
-
-    if (!word || typeof word !== 'string') {
-      return NextResponse.json({ error: 'Word parameter is required' }, { status: 400 });
-    }
-
-    const rhymes = findRhymes(word);
-
-    return NextResponse.json({ rhymes });
-  } catch (error) {
-    console.error('Failed to find rhymes:', error);
-    return NextResponse.json({ error: 'Failed to find rhymes' }, { status: 500 });
+    const [perfect, near, assonance] = await Promise.all([
+      fetch(endpoint("rel_rhy")).then(r => r.json()).catch(() => []),
+      fetch(endpoint("rel_nry")).then(r => r.json()).catch(() => []),
+      fetch(endpoint("sl")).then(r => r.json()).catch(() => []),
+    ]);
+    const pick = (arr: any[]) => [...new Set(arr.map(x => x.word))];
+    return NextResponse.json({
+      perfect: pick(perfect),
+      near: pick(near),
+      assonance: pick(assonance),
+    });
+  } catch {
+    return NextResponse.json({ perfect: [], near: [], assonance: [] });
   }
 }

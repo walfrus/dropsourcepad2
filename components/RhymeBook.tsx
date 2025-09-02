@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Search, Music, Sparkles, Copy, Check } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { findRhymes, getRhymeGroups, RHYME_GROUPS } from '@/lib/rhyme';
+import { getRhymeGroups } from '@/lib/rhyme';
 
 interface RhymeBookProps {
   isOpen: boolean;
@@ -31,34 +31,36 @@ export function RhymeBook({ isOpen, onClose }: RhymeBookProps) {
 
   useEffect(() => {
     if (searchWord.trim()) {
-      searchRhymes(searchWord);
+      searchRhymes(searchWord).then(data => {
+        const results: RhymeResult[] = [];
+        
+        // Process perfect rhymes
+        data.perfect?.forEach((word: string) => {
+          results.push({ word, group: '', type: 'exact' });
+        });
+        
+        // Process near rhymes
+        data.near?.forEach((word: string) => {
+          results.push({ word, group: '', type: 'near' });
+        });
+        
+        // Process assonance
+        data.assonance?.forEach((word: string) => {
+          results.push({ word, group: '', type: 'assonance' });
+        });
+        
+        setRhymeResults(results);
+      });
     } else {
       setRhymeResults([]);
     }
   }, [searchWord]);
 
-  const searchRhymes = (word: string) => {
-    const rhymes = findRhymes(word);
-    const results: RhymeResult[] = [];
-
-    // Find the rhyme group for this word
-    const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-    let rhymeGroup = '';
-    
-    for (const group of Object.keys(RHYME_GROUPS)) {
-      if (cleanWord.endsWith(group)) {
-        rhymeGroup = group;
-        break;
-      }
-    }
-
-    // Add all rhymes as exact matches
-    rhymes.forEach(rhyme => {
-      results.push({ word: rhyme, group: rhymeGroup, type: 'exact' });
-    });
-
-    setRhymeResults(results);
-  };
+  async function searchRhymes(word: string) {
+    const res = await fetch(`/api/rhyme?q=${encodeURIComponent(word)}`);
+    if (!res.ok) return { perfect: [], near: [], assonance: [] };
+    return res.json();
+  }
 
   const copyToClipboard = async (word: string) => {
     try {

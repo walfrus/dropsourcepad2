@@ -1,20 +1,22 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middleware';
 import { Project, LyricSection, Clip, AppStore, SectionName, UIState } from './types';
 import * as idb from './idb';
 
 const useAppStore = create<AppStore>()(
-  subscribeWithSelector((set, get) => ({
-    projects: [],
-    currentProjectId: null,
-    ui: {
-      showTools: false,
-      showDrawer: false,
-      showOverlay: false,
-      showRhymeBook: false,
-      showSyllableCounter: false,
-      showAIAssist: false,
-    },
+  persist(
+    subscribeWithSelector((set, get) => ({
+      projects: [],
+      currentProjectId: null,
+      _hasHydrated: false,
+      ui: {
+        showTools: false,
+        showDrawer: false,
+        showOverlay: false,
+        showRhymeBook: false,
+        showSyllableCounter: false,
+        showAIAssist: false,
+      },
 
     createProject: (title = 'Untitled Project') => {
       const now = Date.now();
@@ -191,8 +193,23 @@ const useAppStore = create<AppStore>()(
         ui: { ...state.ui, [key]: !state.ui[key] },
       }));
     },
-  }))
-);
+  })),
+  {
+    name: "dss-v1",
+    version: 2,
+    storage: createJSONStorage(() => localStorage),
+    partialize: (s) => ({
+      projects: s.projects,
+      currentProjectId: s.currentProjectId,
+    }),
+    onRehydrateStorage: (state) => {
+      if (state) {
+        state._hasHydrated = true;
+      }
+    },
+    migrate: (state) => state as any,
+  }
+));
 
 // Initialize store with data from database
 export const initializeStore = async () => {
@@ -224,13 +241,13 @@ export const initializeStore = async () => {
           {
             id: crypto.randomUUID(),
             name: 'verse' as SectionName,
-            text: 'This is where your verse lyrics go...',
+            text: '',
             projectId: demoProjectId,
           },
           {
             id: crypto.randomUUID(),
             name: 'chorus' as SectionName,
-            text: 'This is where your chorus lyrics go...',
+            text: '',
             projectId: demoProjectId,
           },
         ],

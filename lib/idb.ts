@@ -143,4 +143,23 @@ export const getBlob = async (key: string): Promise<Blob | null> => {
 };
 export const deleteBlob = (key: string): Promise<void> => safeDelete(db.blobs, key);
 
+import { openDB } from 'idb';
+
+const DB_NAME = "dss-clips";
+const STORE = "clips";
+
+export async function saveClipBlob(id: string, blob: Blob) {
+  const db = await openDB(DB_NAME, 1, {
+    upgrade(db) { if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); }
+  });
+  const tx = db.transaction(STORE, "readwrite");
+  tx.objectStore(STORE).put(blob, id);
+  await tx.done;
+}
+
+export async function getClipBlob(id: string): Promise<Blob | undefined> {
+  const db = await openDB(DB_NAME, 1);
+  return db.transaction(STORE).objectStore(STORE).get(id);
+}
+
 export default db;

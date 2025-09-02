@@ -39,6 +39,7 @@ export interface UIState {
 export interface AppState {
   projects: Project[];
   currentProjectId: string | null;
+  _hasHydrated: boolean;
   ui: UIState;
 }
 
