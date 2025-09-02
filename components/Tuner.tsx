@@ -11,7 +11,7 @@ export function Tuner() {
   const [currentNote, setCurrentNote] = useState<string>('');
   const [currentCents, setCurrentCents] = useState<number>(0);
   const [currentFreq, setCurrentFreq] = useState<number>(0);
-  const [isInTune, setIsInTune] = useState<boolean>(false);
+
   
   const pitchDetector = useRef<PitchDetector | null>(null);
 
@@ -29,7 +29,7 @@ export function Tuner() {
         setCurrentNote(note);
         setCurrentCents(cents);
         setCurrentFreq(frequency);
-        setIsInTune(Math.abs(cents) < 10); // Consider in tune if within 10 cents
+
       });
 
       await pitchDetector.current.start();
@@ -47,7 +47,7 @@ export function Tuner() {
       setCurrentNote('');
       setCurrentCents(0);
       setCurrentFreq(0);
-      setIsInTune(false);
+
     }
   };
 

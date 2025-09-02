@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Send, Copy, Check, RefreshCw, Lightbulb, Music, Heart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Input } from './ui/input';
+
 
 interface AIAssistProps {
   isOpen: boolean;
@@ -298,8 +298,8 @@ export function AIAssist({ isOpen, onClose, context = '' }: AIAssistProps) {
                 How to Use AI Assistant
               </h4>
               <ul className="text-sm space-y-1">
-                <li>• Be specific about what you're looking for (lyrics, melody, theme, etc.)</li>
-                <li>• Include context about your song's mood and style</li>
+                <li>• Be specific about what you&apos;re looking for (lyrics, melody, theme, etc.)</li>
+                <li>• Include context about your song&apos;s mood and style</li>
                 <li>• Use the suggestions as inspiration, not final lyrics</li>
                 <li>• Combine multiple suggestions to create something unique</li>
                 <li>• The AI works best when you provide clear direction</li>

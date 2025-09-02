@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+
 import { Guitar, Piano, Music } from 'lucide-react';
 import { GUITAR_CHORDS, PIANO_CHORDS, CHORDS } from '@/lib/music';
 import { Button } from './ui/button';

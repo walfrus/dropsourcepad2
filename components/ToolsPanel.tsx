@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Tuner } from './Tuner';
 import { ChordBook } from './ChordBook';

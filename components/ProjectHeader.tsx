@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+
 import { Calendar, Music, Edit3 } from 'lucide-react';
 import { Project } from '@/lib/types';
 import useAppStore from '@/lib/store';

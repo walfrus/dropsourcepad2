@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Play, Pause, Square, Upload, Trash2, Download } from 'lucide-react';
+import { Mic, MicOff, Play, Pause, Square, Upload, Trash2 } from 'lucide-react';
 import { Project, Clip } from '@/lib/types';
 import useAppStore from '@/lib/store';
 import { AudioRecorder, getAudioDuration } from '@/lib/audio';
@@ -39,7 +39,7 @@ export function AudioNote({ project }: AudioNoteProps) {
   const startRecording = async () => {
     try {
       audioRecorder.current = new AudioRecorder(
-        (blob) => {
+        () => {
           // Handle data available
         },
         async (blob) => {

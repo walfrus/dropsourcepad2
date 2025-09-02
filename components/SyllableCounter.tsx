@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hash, Info, TrendingUp, TrendingDown } from 'lucide-react';
+import { Hash, Info, TrendingUp } from 'lucide-react';
 import { Button } from './ui/button';
 import { countSyllablesInText, countWords, countCharacters } from '@/lib/syllables';
 

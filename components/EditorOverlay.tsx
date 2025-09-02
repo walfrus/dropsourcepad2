@@ -48,12 +48,7 @@ export function EditorOverlay({ isOpen, onClose }: EditorOverlayProps) {
     purple: 'bg-purple-400/30 border-purple-400',
   };
 
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim()) {
-      setSelectedText(selection.toString().trim());
-    }
-  };
+
 
   const addHighlight = () => {
     if (!selectedText) return;
@@ -263,11 +258,11 @@ export function EditorOverlay({ isOpen, onClose }: EditorOverlayProps) {
                 <div className="flex-1 bg-card rounded-lg p-4">
                   <div className="mb-4">
                     <p className="text-sm text-muted mb-2">
-                      Select text in the editor below, then click "Add Highlight"
+                      Select text in the editor below, then click &quot;Add Highlight&quot;
                     </p>
                     {selectedText && (
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">Selected: "{selectedText}"</span>
+                        <span className="text-sm">Selected: &quot;{selectedText}&quot;</span>
                         <Button size="sm" onClick={addHighlight}>
                           Add Highlight
                         </Button>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Search, Music, Sparkles, Copy, Check } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { findRhymes, getRhymeGroups, doWordsRhyme, RHYME_GROUPS } from '@/lib/rhyme';
+import { findRhymes, getRhymeGroups, RHYME_GROUPS } from '@/lib/rhyme';
 
 interface RhymeBookProps {
   isOpen: boolean;

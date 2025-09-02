@@ -111,7 +111,7 @@ export const frequencyToNote = (freq: number): { note: string; cents: number } =
   const c0 = a4 * Math.pow(2, -4.75);
   const halfStepsBelowMiddleC = Math.round(12 * Math.log2(freq / c0));
   
-  const octave = Math.floor(halfStepsBelowMiddleC / 12);
+
   const noteIndex = (halfStepsBelowMiddleC % 12 + 12) % 12;
   
   const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -130,7 +130,7 @@ export const findChords = (notes: string[]): Array<{ chord: string; confidence: 
   
   for (const [chordName, chordNotes] of Object.entries(CHORDS)) {
     let matches = 0;
-    let totalNotes = chordNotes.length;
+    const totalNotes = chordNotes.length;
     
     for (const note of notes) {
       if (chordNotes.includes(note)) {

@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Plus, 
   Search, 
   Trash2, 
-  Edit3, 
+
   Calendar,
   Music,
-  MoreVertical
+
 } from 'lucide-react';
 import { Project } from '@/lib/types';
 import useAppStore from '@/lib/store';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectHeader } from './ProjectHeader';
 import { LyricEditor } from './LyricEditor';
@@ -15,61 +15,13 @@ import { AIAssist } from './AIAssist';
 import useAppStore from '@/lib/store';
 
 export default function WorkspaceShell() {
-  const [error, setError] = useState<string | null>(null);
+
   
   // Use the store hook at the top level (this is the correct pattern)
-  const { currentProjectId, projects, ui, createProject, setCurrentProject, toggleUI } = useAppStore();
-  const currentProject = projects.find((p: any) => p.id === currentProjectId);
+  const { currentProjectId, projects, ui, createProject, toggleUI } = useAppStore();
+  const currentProject = projects.find((p) => (p as { id: string }).id === currentProjectId);
 
-  // If there's an error, show error UI
-  if (error) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Application Error</h1>
-          <p className="text-muted mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
-          >
-            Refresh Page
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // If no projects are loaded yet, show loading
-  if (projects.length === 0) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-muted">Loading workspace...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no current project is selected, show the create project UI
-  if (!currentProject) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-accent mb-4">Daily Song Sketchpad</h1>
-          <p className="text-muted mb-6">Create your first project to get started</p>
-          <button
-            onClick={() => createProject()}
-            className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
-          >
-            Create Project
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Keyboard shortcuts
+  // Keyboard shortcuts - must be at top level before any early returns
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -104,6 +56,38 @@ export default function WorkspaceShell() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [createProject, toggleUI]);
+
+
+
+  // If no projects are loaded yet, show loading
+  if (projects.length === 0) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-muted">Loading workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no current project is selected, show the create project UI
+  if (!currentProject) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-accent mb-4">Daily Song Sketchpad</h1>
+          <p className="text-muted mb-6">Create your first project to get started</p>
+          <button
+            onClick={() => createProject()}
+            className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
+          >
+            Create Project
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg text-white">

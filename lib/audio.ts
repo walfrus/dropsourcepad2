@@ -175,7 +175,7 @@ export class PitchDetector {
     const c0 = a4 * Math.pow(2, -4.75);
     const halfStepsBelowMiddleC = Math.round(12 * Math.log2(freq / c0));
     
-    const octave = Math.floor(halfStepsBelowMiddleC / 12);
+
     const noteIndex = (halfStepsBelowMiddleC % 12 + 12) % 12;
     
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
