@@ -3,7 +3,7 @@
 import useAppStore from '@/lib/store';
 import WorkspaceShell from '@/components/WorkspaceShell';
 import { AudioNote } from '@/components/AudioNote';
-import DevErrorBoundary from '@/components/DevErrorBoundary';
+
 
 
 
@@ -20,20 +20,18 @@ export default function Home() {
   }
 
   return (
-    <DevErrorBoundary>
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-        <section className="card flex-1 lg:flex-[2] p-4 lg:p-6 space-y-4">
-          <WorkspaceShell />
-        </section>
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+      <section className="card flex-1 lg:flex-[2] p-4 lg:p-6 space-y-4">
+        <WorkspaceShell />
+      </section>
 
-        <aside className="card w-full lg:w-[360px] max-w-full p-4 lg:p-6 lg:sticky lg:top-6 h-fit">
-          {currentProject ? (
-            <AudioNote project={currentProject} />
-          ) : (
-            <p className="muted text-sm">Create or select a project to add audio notes.</p>
-          )}
-        </aside>
-      </div>
-    </DevErrorBoundary>
+      <aside className="card w-full lg:w-[360px] max-w-full p-4 lg:p-6 lg:sticky lg:top-6 h-fit">
+        {currentProject ? (
+          <AudioNote project={currentProject} />
+        ) : (
+          <p className="muted text-sm">Create or select a project to add audio notes.</p>
+        )}
+      </aside>
+    </div>
   );
 }
