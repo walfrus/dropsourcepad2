@@ -1,0 +1,178 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ProjectHeader } from './ProjectHeader';
+import { LyricEditor } from './LyricEditor';
+import { AudioNote } from './AudioNote';
+import { Toolbar } from './Toolbar';
+import { ToolsPanel } from './ToolsPanel';
+import { ProjectDrawer } from './ProjectDrawer';
+import { EditorOverlay } from './EditorOverlay';
+import { SyllableCounter } from './SyllableCounter';
+import { RhymeBook } from './RhymeBook';
+import { AIAssist } from './AIAssist';
+import useAppStore from '@/lib/store';
+
+export default function WorkspaceShell() {
+  const [error, setError] = useState<string | null>(null);
+  
+  // Use the store hook at the top level (this is the correct pattern)
+  const { currentProjectId, projects, ui, createProject, setCurrentProject, toggleUI } = useAppStore();
+  const currentProject = projects.find((p: any) => p.id === currentProjectId);
+
+  // If there's an error, show error UI
+  if (error) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-500 mb-4">Application Error</h1>
+          <p className="text-muted mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If no projects are loaded yet, show loading
+  if (projects.length === 0) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-muted">Loading workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no current project is selected, show the create project UI
+  if (!currentProject) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-accent mb-4">Daily Song Sketchpad</h1>
+          <p className="text-muted mb-6">Create your first project to get started</p>
+          <button
+            onClick={() => createProject()}
+            className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
+          >
+            Create Project
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifier && e.key === 'n') {
+        e.preventDefault();
+        createProject();
+      }
+
+      if (modifier && e.key === 's') {
+        e.preventDefault();
+        // Show saved toast
+        console.log('Saved');
+      }
+
+      if (modifier && e.key === 'b') {
+        e.preventDefault();
+        toggleUI('showDrawer');
+      }
+
+      if (e.key === ' ' && e.target === document.body) {
+        e.preventDefault();
+        // Focus BPM tap button
+        const bpmButton = document.querySelector('[data-bpm-tap]') as HTMLButtonElement;
+        if (bpmButton) {
+          bpmButton.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [createProject, toggleUI]);
+
+  return (
+    <div className="min-h-screen bg-bg text-white">
+      {/* Project Header */}
+      <ProjectHeader project={currentProject} />
+
+      {/* Main Content */}
+      <div className="flex h-[calc(100vh-80px)]">
+        {/* Project Drawer */}
+        <AnimatePresence>
+          {ui.showDrawer && (
+            <motion.div
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-80"
+            >
+              <ProjectDrawer isOpen={ui.showDrawer} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Workspace */}
+        <div className="flex-1 flex flex-col">
+          {/* Toolbar */}
+          <Toolbar />
+
+          {/* Editor and Audio */}
+          <div className="flex-1 flex">
+            {/* Left Panel - Editor */}
+            <div className="flex-1 p-6">
+              <LyricEditor project={currentProject} />
+            </div>
+
+            {/* Right Panel - Audio Notes */}
+            <div className="w-80 bg-panel border-l border-line p-6">
+              <AudioNote project={currentProject} />
+            </div>
+          </div>
+        </div>
+
+        {/* Tools Panel */}
+        <AnimatePresence>
+          {ui.showTools && (
+            <motion.div
+              initial={{ x: 300 }}
+              animate={{ x: 0 }}
+              exit={{ x: 300 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-80 bg-panel border-l border-line"
+            >
+              <ToolsPanel />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Overlay for drawing/highlighting */}
+      <EditorOverlay isOpen={ui.showOverlay} onClose={() => toggleUI('showOverlay')} />
+
+      {/* Syllable Counter */}
+      <SyllableCounter isOpen={ui.showSyllableCounter} onClose={() => toggleUI('showSyllableCounter')} />
+
+      {/* Rhyme Book */}
+      <RhymeBook isOpen={ui.showRhymeBook} onClose={() => toggleUI('showRhymeBook')} />
+
+      {/* AI Assistant */}
+      <AIAssist isOpen={ui.showAIAssist} onClose={() => toggleUI('showAIAssist')} />
+    </div>
+  );
+}
