@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectHeader } from './ProjectHeader';
 import { LyricEditor } from './LyricEditor';
@@ -13,8 +13,7 @@ import { AIAssist } from './AIAssist';
 import useAppStore from '@/lib/store';
 
 export default function WorkspaceShell() {
-
-  
+  const [ready, setReady] = useState(false);
   // Use the store hook at the top level (this is the correct pattern)
   const { currentProjectId, projects, ui, createProject, toggleUI } = useAppStore();
   const currentProject = projects.find((p) => (p as { id: string }).id === currentProjectId);
@@ -54,6 +53,10 @@ export default function WorkspaceShell() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [createProject, toggleUI]);
+
+  // Hydration guard
+  useEffect(() => { setReady(true); }, []);
+  if (!ready) return null;
 
 
 

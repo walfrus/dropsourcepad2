@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Project, Clip } from '@/lib/types';
 import useAppStore from '@/lib/store';
 import { fmtMs, blobWithDuration } from '@/lib/audio';
@@ -11,11 +11,16 @@ interface AudioNoteProps {
 }
 
 export function AudioNote({ project }: AudioNoteProps) {
+  const [ready, setReady] = useState(false);
   const { addClip } = useAppStore();
   const [isRecording, setIsRecording] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [chunks, setChunks] = useState<Blob[]>([]);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  
+  useEffect(() => { setReady(true); }, []);
+  
+  if (!ready || typeof window === 'undefined') return null;
 
   const startRecording = async () => {
     try {
