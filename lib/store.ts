@@ -3,6 +3,11 @@ import { subscribeWithSelector, persist, createJSONStorage } from 'zustand/middl
 import { Project, LyricSection, Clip, AppStore, SectionName, UIState } from './types';
 import * as idb from './idb';
 
+const safeStorage =
+  typeof window !== 'undefined'
+    ? createJSONStorage(() => localStorage)
+    : undefined as unknown as ReturnType<typeof createJSONStorage>;
+
 const useAppStore = create<AppStore>()(
   persist(
     subscribeWithSelector((set, get) => ({
@@ -197,35 +202,24 @@ const useAppStore = create<AppStore>()(
   {
     name: "dss-v1",
     version: 2,
-    storage: createJSONStorage(() => localStorage),
+          storage: safeStorage,    // <- server gets no-op storage
     partialize: (s) => ({
       projects: s.projects,
       currentProjectId: s.currentProjectId,
     }),
-    onRehydrateStorage: (state) => {
-      if (state) {
-        state._hasHydrated = true;
-      }
+    onRehydrateStorage: () => () => {
+      useAppStore.setState({ _hasHydrated: true });
     },
     migrate: (state) => state as any,
   }
 ));
 
-// Fallback: if onRehydrateStorage didn't fire (e.g., empty storage), mark hydrated on next tick
+// Optional final safety net (client only)
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     const s = useAppStore.getState();
     if (!s._hasHydrated) useAppStore.setState({ _hasHydrated: true });
   }, 0);
-  
-  // Additional fallback after 1s to prevent hanging
-  setTimeout(() => {
-    const s = useAppStore.getState();
-    if (!s._hasHydrated) {
-      console.log('Hydration fallback triggered after 1s');
-      useAppStore.setState({ _hasHydrated: true });
-    }
-  }, 1000);
 }
 
 // Initialize store with data from database

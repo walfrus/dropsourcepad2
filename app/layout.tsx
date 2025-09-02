@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import ClientRoot from '@/components/ClientRoot';
 
+const MIN = process.env.NEXT_PUBLIC_MINIMAL === '1';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -27,13 +28,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
       <body className={inter.className}>
-        <ClientRoot>
+        {MIN ? (
           <div className="min-h-screen">
-            <main className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-6">
-              {children}
-            </main>
+            <main className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-6">{children}</main>
           </div>
-        </ClientRoot>
+        ) : (
+          <ClientRoot>
+            <div className="min-h-screen">
+              <main className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+            </div>
+          </ClientRoot>
+        )}
       </body>
     </html>
   );
