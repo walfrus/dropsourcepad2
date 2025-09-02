@@ -11,8 +11,11 @@ export default function Home() {
   const { currentProjectId, projects } = useAppStore();
   const currentProject = projects.find((p) => (p as { id: string }).id === currentProjectId);
   
+  // Debug hydration state
+  console.log('hydrated', useAppStore.getState()._hasHydrated);
+  
   if (!hydrated) {
-    return <div className="min-h-screen flex items-center justify-center muted">Loading…</div>;
+    return <div className="min-h-screen flex items-center justify-center muted">Loading workspace…</div>;
   }
 
   return (

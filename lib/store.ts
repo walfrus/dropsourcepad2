@@ -211,6 +211,23 @@ const useAppStore = create<AppStore>()(
   }
 ));
 
+// Fallback: if onRehydrateStorage didn't fire (e.g., empty storage), mark hydrated on next tick
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    const s = useAppStore.getState();
+    if (!s._hasHydrated) useAppStore.setState({ _hasHydrated: true });
+  }, 0);
+  
+  // Additional fallback after 1s to prevent hanging
+  setTimeout(() => {
+    const s = useAppStore.getState();
+    if (!s._hasHydrated) {
+      console.log('Hydration fallback triggered after 1s');
+      useAppStore.setState({ _hasHydrated: true });
+    }
+  }, 1000);
+}
+
 // Initialize store with data from database
 export const initializeStore = async () => {
   try {
