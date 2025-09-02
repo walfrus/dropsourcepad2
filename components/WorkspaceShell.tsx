@@ -4,8 +4,6 @@ import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectHeader } from './ProjectHeader';
 import { LyricEditor } from './LyricEditor';
-import { AudioNote } from './AudioNote';
-import { Toolbar } from './Toolbar';
 import { ToolsPanel } from './ToolsPanel';
 import { ProjectDrawer } from './ProjectDrawer';
 import { EditorOverlay } from './EditorOverlay';
@@ -90,72 +88,30 @@ export default function WorkspaceShell() {
   }
 
   return (
-    <div className="min-h-screen bg-bg text-white">
-      {/* Project Header */}
+    <div className="space-y-4 lg:space-y-6">
       <ProjectHeader project={currentProject} />
+      <ToolsPanel />
+      <LyricEditor project={currentProject} />
 
-      {/* Main Content */}
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Project Drawer */}
-        <AnimatePresence>
-          {ui.showDrawer && (
-            <motion.div
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-80"
-            >
-              <ProjectDrawer isOpen={ui.showDrawer} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Drawer */}
+      <AnimatePresence>
+        {ui.showDrawer && (
+          <motion.div
+            initial={{ x: -300 }}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="w-80"
+          >
+            <ProjectDrawer isOpen={ui.showDrawer} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Main Workspace */}
-        <div className="flex-1 flex flex-col">
-          {/* Toolbar */}
-          <Toolbar />
-
-          {/* Editor and Audio */}
-          <div className="flex-1 flex">
-            {/* Left Panel - Editor */}
-            <div className="flex-1 p-6">
-              <LyricEditor project={currentProject} />
-            </div>
-
-            {/* Right Panel - Audio Notes */}
-            <div className="w-80 bg-panel border-l border-line p-6">
-              <AudioNote project={currentProject} />
-            </div>
-          </div>
-        </div>
-
-        {/* Tools Panel */}
-        <AnimatePresence>
-          {ui.showTools && (
-            <motion.div
-              initial={{ x: 300 }}
-              animate={{ x: 0 }}
-              exit={{ x: 300 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-80 bg-panel border-l border-line"
-            >
-              <ToolsPanel />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Overlay for drawing/highlighting */}
+      {/* Overlays */}
       <EditorOverlay isOpen={ui.showOverlay} onClose={() => toggleUI('showOverlay')} />
-
-      {/* Syllable Counter */}
       <SyllableCounter isOpen={ui.showSyllableCounter} onClose={() => toggleUI('showSyllableCounter')} />
-
-      {/* Rhyme Book */}
       <RhymeBook isOpen={ui.showRhymeBook} onClose={() => toggleUI('showRhymeBook')} />
-
-      {/* AI Assistant */}
       <AIAssist isOpen={ui.showAIAssist} onClose={() => toggleUI('showAIAssist')} />
     </div>
   );

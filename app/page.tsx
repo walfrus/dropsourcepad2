@@ -1,25 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { initializeStore } from '@/lib/store';
+import useAppStore from '@/lib/store';
+import WorkspaceShell from '@/components/WorkspaceShell';
+import { AudioNote } from '@/components/AudioNote';
 
-// Dynamically import WorkspaceShell to avoid SSR issues with IndexedDB
-const WorkspaceShell = dynamic(() => import('@/components/WorkspaceShell'), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-bg flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-        <p className="text-muted">Loading Daily Song Sketchpad...</p>
-      </div>
-    </div>
-  ),
-});
+
 
 export default function Home() {
   const [isStoreInitialized, setIsStoreInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { currentProjectId, projects } = useAppStore();
+  const currentProject = projects.find((p) => (p as { id: string }).id === currentProjectId);
 
   useEffect(() => {
     // Initialize the store when the component mounts
@@ -64,5 +57,19 @@ export default function Home() {
     );
   }
 
-  return <WorkspaceShell />;
+  return (
+    <div className="flex gap-4 lg:gap-6">
+      <section className="card flex-1 lg:flex-[2] p-4 lg:p-6 space-y-4">
+        <WorkspaceShell />
+      </section>
+
+      <aside className="card w-[360px] max-w-full p-4 lg:p-6 sticky top-6 h-fit">
+        {currentProject ? (
+          <AudioNote project={currentProject} />
+        ) : (
+          <p className="muted text-sm">Create or select a project to add audio notes.</p>
+        )}
+      </aside>
+    </div>
+  );
 }
