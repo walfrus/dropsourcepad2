@@ -5,6 +5,14 @@ import DevErrorBoundary from '@/components/DevErrorBoundary';
 export default function ClientRoot({ children }: { children: React.ReactNode }) {
   // Global error taps so prod shows real info
   useEffect(() => {
+    const origError = console.error;
+    console.error = (...args) => {
+      origError.apply(console, args);
+      if (args[0] instanceof Error) {
+        alert("💥 React error: " + args[0].message + "\n\n" + args[0].stack);
+      }
+    };
+    
     const onError = (evt: ErrorEvent) => {
       // eslint-disable-next-line no-console
       console.error('💥 window.onerror', evt.message, evt.filename, evt.lineno, evt.colno, evt.error?.stack);
@@ -18,6 +26,7 @@ export default function ClientRoot({ children }: { children: React.ReactNode }) 
     return () => {
       window.removeEventListener('error', onError);
       window.removeEventListener('unhandledrejection', onRejection);
+      console.error = origError;
     };
   }, []);
 
